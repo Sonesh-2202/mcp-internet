@@ -1,0 +1,43 @@
+[project]
+name = "mcp-internet"
+version = "1.0.0"
+description = "🌐 MCP Server that gives local LLMs internet access - web search, news, weather, and more!"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Your Name", email = "your.email@example.com" }
+]
+keywords = ["mcp", "llm", "lm-studio", "ai", "internet", "tools"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]>=1.2.0",
+    "httpx>=0.27.0",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=5.0.0",
+    "ddgs>=9.0.0",
+]
+
+[project.scripts]
+mcp-internet = "mcp_internet.server:main"
+
+[project.urls]
+Homepage = "https://github.com/yourusername/mcp-internet"
+Repository = "https://github.com/yourusername/mcp-internet"
+Issues = "https://github.com/yourusername/mcp-internet/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mcp_internet"]

@@ -1,0 +1,7 @@
+services:
+  mcp-internet:
+    build: .
+    container_name: mcp-internet
+    stdin_open: true # Required for STDIO transport
+    tty: true # Required for STDIO transport
+    restart: unless-stopped
