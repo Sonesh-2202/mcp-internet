@@ -4,24 +4,24 @@
 [![MCP](https://img.shields.io/badge/MCP-compatible-green.svg)](https://modelcontextprotocol.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![LM Studio](https://img.shields.io/badge/LM%20Studio-ready-purple.svg)](https://lmstudio.ai/)
+[![Tools](https://img.shields.io/badge/Tools-33-orange.svg)](#-available-tools)
 
-> **Give your local LLMs the power to access the internet!** 🚀
+> **Give your local LLMs the power of the internet!** 🚀
 
-An MCP (Model Context Protocol) server that provides internet access tools for local LLMs running in LM Studio. Search the web, read articles, get weather, fetch news, and more - all without requiring API keys!
+An MCP (Model Context Protocol) server that provides **33 internet access tools** for local LLMs running in LM Studio. Search the web, read articles, get weather, fetch news, check stocks, and much more - all without requiring API keys!
 
-## ✨ Features
+## ✨ Features at a Glance
 
-| Tool | Description |
-|------|-------------|
-| 🔍 **search_web** | Search the internet using DuckDuckGo (with optional deep search) |
-| 🎯 **quick_lookup** | Quick info lookup for people, topics, concepts |
-| 🌐 **search_site** | Search within specific sites (LinkedIn, Instagram, GitHub, etc.) |
-| 📄 **read_webpage** | Extract clean text from any URL |
-| 📰 **get_news** | Latest headlines from Google News |
-| 🌤️ **get_weather** | Weather forecasts via Open-Meteo |
-| 📖 **get_definition** | Wikipedia summaries & dictionary |
-| 💱 **get_currency_rate** | Live exchange rates |
-| 🕐 **get_current_time** | World timezone clock |
+| Category | Tools |
+|----------|-------|
+| 🔍 **Search** | Web search, quick lookup, site-specific search |
+| 📰 **News & Social** | News, Reddit, Hacker News, Twitter/X |
+| 🎬 **Media** | YouTube search & video info |
+| 💻 **Developer** | GitHub repos/users, code paste sharing |
+| 💰 **Finance** | Stocks, crypto, currency conversion |
+| 🌤️ **Info** | Weather, time zones, definitions, translation |
+| 🔗 **URLs** | Shorten, expand, QR codes, WHOIS |
+| 🛠️ **Utilities** | Calculator, IP lookup, PDF reader, email |
 
 **🆓 No API keys required!** All tools use free, open APIs.
 
@@ -37,7 +37,7 @@ An MCP (Model Context Protocol) server that provides internet access tools for l
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/mcp-internet.git
+git clone https://github.com/Sonesh-2202/mcp-internet.git
 cd mcp-internet
 
 # Install dependencies with uv
@@ -45,6 +45,9 @@ uv sync
 
 # Or with pip
 pip install -e .
+
+# Optional: For PDF support
+pip install pdfplumber
 ```
 
 ### Configure LM Studio
@@ -73,95 +76,110 @@ pip install -e .
 
 5. **Restart LM Studio** to load the server
 
-### Verify Installation
-
-The tools should now appear in LM Studio. Try asking your LLM:
-
-> "Search the web for Sujaya Pon Gita"
-
-> "Find sonesh_2202 on Instagram"
-
-> "What's the weather in Tokyo?"
-
 ## 🛠️ Available Tools
 
-### 🔍 search_web
-Search the internet using DuckDuckGo. Now with **deep search** option!
+### 🔍 Search Tools
+
+| Tool | Description |
+|------|-------------|
+| `search_web` | Search the internet using DuckDuckGo (with deep search option) |
+| `quick_lookup` | Quick info lookup for people, topics, concepts |
+| `search_site` | Search within specific sites (LinkedIn, Instagram, etc.) |
+
+### 📄 Content Reading
+
+| Tool | Description |
+|------|-------------|
+| `read_webpage` | Extract clean text from any URL |
+| `read_pdf` | Extract text from PDF URLs |
+
+### 📰 News & Social Media
+
+| Tool | Description |
+|------|-------------|
+| `get_news` | Latest headlines from Google News |
+| `search_reddit` | Search Reddit posts and discussions |
+| `get_subreddit_posts` | Get top posts from a subreddit |
+| `get_hackernews` | Get top/new/best stories from HN |
+| `search_hackernews` | Search Hacker News via Algolia |
+| `search_twitter` | Search Twitter/X via Nitter |
+| `get_user_tweets` | Get recent tweets from a user |
+
+### 🎬 YouTube
+
+| Tool | Description |
+|------|-------------|
+| `search_youtube` | Search YouTube videos |
+| `get_video_info` | Get video details (title, views, description) |
+
+### 💻 GitHub
+
+| Tool | Description |
+|------|-------------|
+| `search_github` | Search GitHub repositories |
+| `get_repo_info` | Get detailed repo information |
+| `get_github_user` | Get user/org profile info |
+
+### 💰 Finance
+
+| Tool | Description |
+|------|-------------|
+| `get_stock_price` | Stock prices via Yahoo Finance |
+| `get_crypto_price` | Crypto prices via CoinGecko |
+| `get_currency_rate` | Live exchange rates |
+
+### 🌤️ Information
+
+| Tool | Description |
+|------|-------------|
+| `get_weather` | Weather forecasts via Open-Meteo |
+| `get_current_time` | World timezone clock |
+| `get_definition` | Wikipedia summaries & dictionary |
+| `translate_text` | Translate between 30+ languages |
+| `detect_language` | Detect text language |
+| `calculate` | Safe math expression evaluator |
+
+### 🔗 URL & Network Tools
+
+| Tool | Description |
+|------|-------------|
+| `shorten_url` | Create short URLs |
+| `expand_url` | Reveal destination of short URLs |
+| `get_my_ip` | Get your public IP address |
+| `geolocate_ip` | Get location info for any IP |
+| `whois_lookup` | Domain registration info |
+
+### 📱 QR Codes
+
+| Tool | Description |
+|------|-------------|
+| `generate_qr` | Generate QR code for text/URL |
+| `generate_wifi_qr` | Generate WiFi network QR code |
+
+### 📤 Sharing
+
+| Tool | Description |
+|------|-------------|
+| `create_paste` | Share code snippets via pastebin |
+| `send_email` | Send emails via SMTP |
+
+## 💡 Usage Examples
+
+Try asking your LLM:
 
 ```
-Query: "Python programming" or "Elon Musk"
-Results: 10 (default), max 20
-Deep Search: Set to true for detailed content analysis
-```
-
-**Examples:**
-- Basic: "Search for AI news"
-- Deep: "Do a deep search for quantum computing"
-
-### 🎯 quick_lookup (NEW!)
-Quick info lookup - perfect for finding info about **people, places, or topics**.
-
-```
-Query: "Sujaya Pon Gita" or "sonesh_2202"
-```
-Automatically fetches and shows content from the most relevant result!
-
-### 🌐 search_site (NEW!)
-Search within a **specific website** - great for finding social profiles!
-
-```
-Query: "John Doe"
-Site: "linkedin.com" or "instagram.com" or "github.com"
-```
-
-**Examples:**
-- "Search for John Doe on LinkedIn"
-- "Find sonesh_2202 on Instagram"
-
-### 📄 read_webpage
-Extract the main content from any webpage.
-
-```
-URL: "https://example.com/article"
-Max Length: 5000 characters (default)
-```
-
-### 📰 get_news
-Fetch latest news headlines.
-
-```
-Topics: world, business, technology, science, health, sports, entertainment
-... or any search query
-```
-
-### 🌤️ get_weather
-Get current weather and 3-day forecast.
-
-```
-Location: "Tokyo", "New York, USA", "Paris, France"
-```
-
-### 📖 get_definition
-Look up definitions and Wikipedia summaries.
-
-```
-Term: "quantum computing", "Python", "artificial intelligence"
-```
-
-### 💱 get_currency_rate
-Convert currencies with live rates.
-
-```
-From: "USD"
-To: "EUR"
-Amount: 100
-```
-
-### 🕐 get_current_time
-Get current time for any timezone.
-
-```
-Location: "Tokyo", "America/New_York", "UTC"
+"Search the web for Python async tutorials"
+"What's the weather in Tokyo?"
+"Get the latest tech news"
+"What's the price of Bitcoin?"
+"Search Reddit for machine learning discussions"
+"Find trending repos on GitHub for Rust"
+"What's on the front page of Hacker News?"
+"Translate 'Hello world' to Japanese"
+"Calculate 15% of 2500"
+"Create a QR code for my website"
+"Get stock price for AAPL"
+"Search YouTube for coding tutorials"
 ```
 
 ## 🧪 Testing
@@ -173,7 +191,7 @@ cd "e:\Coding projects\MCP-Internet"
 uv run mcp dev src/mcp_internet/server.py
 ```
 
-This opens an interactive browser interface where you can test all tools.
+This opens an interactive browser interface to test all tools.
 
 ### Direct Testing
 
@@ -181,8 +199,11 @@ This opens an interactive browser interface where you can test all tools.
 # Test search
 uv run python -c "import asyncio; from src.mcp_internet.tools.search import search_web; print(asyncio.run(search_web('Python programming')))"
 
-# Test quick lookup
-uv run python -c "import asyncio; from src.mcp_internet.tools.search import quick_lookup; print(asyncio.run(quick_lookup('Elon Musk')))"
+# Test stock price
+uv run python -c "import asyncio; from src.mcp_internet.tools.stocks import get_stock_price; print(asyncio.run(get_stock_price('AAPL')))"
+
+# Test crypto
+uv run python -c "import asyncio; from src.mcp_internet.tools.stocks import get_crypto_price; print(asyncio.run(get_crypto_price('bitcoin')))"
 ```
 
 ## 📁 Project Structure
@@ -191,21 +212,51 @@ uv run python -c "import asyncio; from src.mcp_internet.tools.search import quic
 MCP-Internet/
 ├── src/mcp_internet/
 │   ├── __init__.py
-│   ├── server.py           # Main MCP server (9 tools)
+│   ├── server.py              # Main MCP server (33 tools)
 │   ├── tools/
-│   │   ├── search.py       # Web search, quick_lookup, search_site
-│   │   ├── webpage.py      # Content extraction
-│   │   ├── news.py         # News headlines
-│   │   ├── weather.py      # Weather data
-│   │   ├── dictionary.py   # Definitions
-│   │   ├── currency.py     # Currency rates
-│   │   └── time.py         # World time
+│   │   ├── search.py          # Web search, quick_lookup, search_site
+│   │   ├── webpage.py         # Content extraction
+│   │   ├── news.py            # News headlines
+│   │   ├── weather.py         # Weather data
+│   │   ├── dictionary.py      # Definitions
+│   │   ├── currency.py        # Currency rates
+│   │   ├── time.py            # World time
+│   │   ├── youtube.py         # YouTube search & info
+│   │   ├── reddit.py          # Reddit search
+│   │   ├── hackernews.py      # Hacker News
+│   │   ├── stocks.py          # Stock & crypto prices
+│   │   ├── github.py          # GitHub search & info
+│   │   ├── translator.py      # Translation
+│   │   ├── twitter.py         # Twitter/X search
+│   │   ├── urls.py            # URL shortener/expander
+│   │   ├── ip_tools.py        # IP geolocation
+│   │   ├── math_tools.py      # Calculator
+│   │   ├── qr_code.py         # QR code generator
+│   │   ├── pdf_reader.py      # PDF text extraction
+│   │   ├── pastebin.py        # Code sharing
+│   │   ├── email_sender.py    # SMTP email
+│   │   └── whois.py           # Domain lookup
 │   └── utils/
-│       └── http_client.py  # HTTP utilities
+│       └── http_client.py     # HTTP utilities
 ├── pyproject.toml
 ├── README.md
 └── LICENSE
 ```
+
+## ⚙️ Configuration
+
+### Email Setup (Optional)
+
+To use the `send_email` tool, set these environment variables:
+
+```bash
+MCP_SMTP_SERVER=smtp.gmail.com
+MCP_SMTP_PORT=587
+MCP_SMTP_EMAIL=your-email@gmail.com
+MCP_SMTP_PASSWORD=your-app-password
+```
+
+For Gmail, use an [App Password](https://myaccount.google.com/apppasswords).
 
 ## 🔧 Troubleshooting
 
@@ -221,7 +272,6 @@ MCP-Internet/
 
 ### "Module not found" errors
 ```bash
-# Reinstall dependencies
 uv sync --reinstall
 ```
 
@@ -242,10 +292,12 @@ MIT License - feel free to use this in your projects!
 - [LM Studio](https://lmstudio.ai/) - Local LLM inference
 - [DuckDuckGo](https://duckduckgo.com/) - Privacy-focused search
 - [Open-Meteo](https://open-meteo.com/) - Free weather API
+- [CoinGecko](https://www.coingecko.com/) - Crypto prices
 - [Wikipedia](https://www.wikipedia.org/) - Knowledge base
 
 ---
 
 <p align="center">
-  Made with ❤️ for the local AI community
+  Made with ❤️ for the local AI community<br>
+  <b>Version 2.0 - 33 Tools!</b>
 </p>

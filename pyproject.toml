@@ -1,13 +1,13 @@
 [project]
 name = "mcp-internet"
-version = "1.0.0"
-description = "🌐 MCP Server that gives local LLMs internet access - web search, news, weather, and more!"
+version = "2.0.0"
+description = "🌐 MCP Server that gives local LLMs internet access - 33 tools for web search, news, weather, stocks, GitHub, YouTube, and more!"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [
-    { name = "Your Name", email = "your.email@example.com" }
+    { name = "Sonesh", email = "sonesh@example.com" }
 ]
-keywords = ["mcp", "llm", "lm-studio", "ai", "internet", "tools"]
+keywords = ["mcp", "llm", "lm-studio", "ai", "internet", "tools", "search", "youtube", "github", "reddit"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -27,13 +27,17 @@ dependencies = [
     "ddgs>=9.0.0",
 ]
 
+[project.optional-dependencies]
+pdf = ["pdfplumber>=0.10.0"]
+all = ["pdfplumber>=0.10.0"]
+
 [project.scripts]
 mcp-internet = "mcp_internet.server:main"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/mcp-internet"
-Repository = "https://github.com/yourusername/mcp-internet"
-Issues = "https://github.com/yourusername/mcp-internet/issues"
+Homepage = "https://github.com/Sonesh-2202/mcp-internet"
+Repository = "https://github.com/Sonesh-2202/mcp-internet"
+Issues = "https://github.com/Sonesh-2202/mcp-internet/issues"
 
 [build-system]
 requires = ["hatchling"]
