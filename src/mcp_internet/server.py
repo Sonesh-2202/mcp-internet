@@ -338,24 +338,18 @@ async def send_email(to_email: str, subject: str, body: str) -> str:
 # Server Entry Point
 # =============================================================================
 async def warmup():
-    """Pre-initialize components to avoid cold-start delays."""
+    """Pre-initialize HTTP client to avoid cold-start delays."""
     try:
-        # Warmup HTTP client with a real request
         from .utils.http_client import get_client
         client = await get_client()
-        # Make a lightweight request to fully initialize the connection pool
+        # Make a real request to fully initialize connection pool
         try:
             await client.get("https://html.duckduckgo.com/html/", timeout=10.0)
-            logger.info("HTTP client warmed up with DuckDuckGo")
+            logger.info("HTTP client warmed up successfully")
         except Exception:
-            logger.info("HTTP client initialized (warmup request skipped)")
-        
-        # Warmup search/DDGS module
-        from .tools.search import warmup_search
-        await warmup_search()
-        logger.info("Search module warmed up")
+            logger.info("HTTP client initialized")
     except Exception as e:
-        logger.warning(f"Warmup failed (non-critical): {e}")
+        logger.warning(f"Warmup failed: {e}")
 
 
 def main():

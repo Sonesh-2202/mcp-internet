@@ -1,8 +1,7 @@
 """
 Web Search Tool - Search the internet using DuckDuckGo.
 
-Uses ddgs library as primary with HTML scraping as fallback.
-Includes retry logic to handle cold-start issues.
+Uses HTML scraping as primary (most reliable) with ddgs library as fallback.
 """
 
 import asyncio
@@ -15,28 +14,6 @@ from bs4 import BeautifulSoup
 from ..utils.http_client import fetch_url
 
 logger = logging.getLogger(__name__)
-
-# Global ddgs instance to avoid re-initialization
-_ddgs_instance = None
-
-
-def get_ddgs():
-    """Get or create a reusable DDGS instance."""
-    global _ddgs_instance
-    if _ddgs_instance is None:
-        from ddgs import DDGS
-        _ddgs_instance = DDGS()
-    return _ddgs_instance
-
-
-async def warmup_search():
-    """Pre-initialize the search components."""
-    try:
-        # Initialize ddgs instance
-        get_ddgs()
-        logger.info("Search module warmed up")
-    except Exception as e:
-        logger.warning(f"Search warmup failed: {e}")
 
 
 async def fetch_page_content(url: str, max_length: int = 3000) -> str:
@@ -59,90 +36,83 @@ def extract_url_from_ddg_redirect(ddg_url: str) -> str:
     return ddg_url
 
 
-async def search_with_ddgs(query: str, num_results: int = 10, retries: int = 3) -> list[dict]:
+async def search_duckduckgo_html(query: str, num_results: int = 10, retries: int = 3) -> list[dict]:
     """
-    Search using ddgs library with retry logic.
+    Search using DuckDuckGo HTML interface - PRIMARY METHOD.
     
-    The ddgs library can be slow on first call, so we retry if needed.
-    """
-    global _ddgs_instance
-    last_error = None
-    
-    for attempt in range(retries):
-        try:
-            ddgs = get_ddgs()
-            # Run in executor to avoid blocking the async loop
-            loop = asyncio.get_event_loop()
-            results = await loop.run_in_executor(
-                None, 
-                lambda: list(ddgs.text(query, max_results=num_results))
-            )
-            if results:
-                return results
-            # If empty results, log and retry
-            logger.warning(f"DDGS returned empty results (attempt {attempt + 1}/{retries})")
-        except Exception as e:
-            last_error = e
-            logger.warning(f"DDGS search error (attempt {attempt + 1}/{retries}): {e}")
-            # Reset instance on error for fresh retry
-            _ddgs_instance = None
-            
-        # Delay before retry (0.5 seconds)
-        if attempt < retries - 1:
-            await asyncio.sleep(0.5)
-    
-    if last_error:
-        logger.error(f"All DDGS attempts failed: {last_error}")
-    return []
-
-
-async def search_duckduckgo_html(query: str, num_results: int = 10) -> list[dict]:
-    """
-    Search using DuckDuckGo HTML interface as fallback.
-    
-    This method scrapes the HTML results page for comprehensive results
-    including detailed snippets and proper URL extraction.
+    This method scrapes the HTML results page and is the most reliable
+    approach. Uses fetch_url which has built-in retry logic.
     """
     encoded_query = quote_plus(query)
     url = f"https://html.duckduckgo.com/html/?q={encoded_query}"
     
-    html = await fetch_url(url)
-    if not html:
-        return []
+    for attempt in range(retries):
+        html = await fetch_url(url, retries=2)
+        if not html:
+            logger.warning(f"HTML fetch failed (attempt {attempt + 1}/{retries})")
+            if attempt < retries - 1:
+                await asyncio.sleep(0.3)
+            continue
+        
+        try:
+            soup = BeautifulSoup(html, "lxml")
+            results = []
+            
+            # Find all result divs
+            for result_div in soup.find_all("div", class_="result"):
+                if len(results) >= num_results:
+                    break
+                
+                # Extract title and link
+                title_elem = result_div.find("a", class_="result__a")
+                if not title_elem:
+                    continue
+                
+                title = title_elem.get_text(strip=True)
+                raw_url = title_elem.get("href", "")
+                result_url = extract_url_from_ddg_redirect(raw_url)
+                
+                # Extract snippet
+                snippet_elem = result_div.find("a", class_="result__snippet")
+                snippet = snippet_elem.get_text(strip=True) if snippet_elem else "No description available"
+                
+                if title and result_url:
+                    results.append({
+                        "title": title,
+                        "href": result_url,
+                        "body": snippet
+                    })
+            
+            if results:
+                return results
+            
+            logger.warning(f"No results parsed from HTML (attempt {attempt + 1}/{retries})")
+            
+        except Exception as e:
+            logger.error(f"Error parsing DuckDuckGo HTML: {e}")
+        
+        if attempt < retries - 1:
+            await asyncio.sleep(0.3)
     
+    return []
+
+
+async def search_with_ddgs(query: str, num_results: int = 10) -> list[dict]:
+    """Fallback search using ddgs library."""
     try:
-        soup = BeautifulSoup(html, "lxml")
-        results = []
+        from ddgs import DDGS
         
-        # Find all result divs
-        for result_div in soup.find_all("div", class_="result"):
-            if len(results) >= num_results:
-                break
-            
-            # Extract title and link
-            title_elem = result_div.find("a", class_="result__a")
-            if not title_elem:
-                continue
-            
-            title = title_elem.get_text(strip=True)
-            raw_url = title_elem.get("href", "")
-            result_url = extract_url_from_ddg_redirect(raw_url)
-            
-            # Extract snippet
-            snippet_elem = result_div.find("a", class_="result__snippet")
-            snippet = snippet_elem.get_text(strip=True) if snippet_elem else "No description available"
-            
-            if title and result_url:
-                results.append({
-                    "title": title,
-                    "href": result_url,
-                    "body": snippet
-                })
+        # Run in executor to avoid blocking
+        loop = asyncio.get_event_loop()
         
-        return results
+        def do_search():
+            ddgs = DDGS()
+            return list(ddgs.text(query, max_results=num_results))
         
+        results = await loop.run_in_executor(None, do_search)
+        return results if results else []
     except Exception as e:
-        logger.error(f"Error parsing DuckDuckGo HTML: {e}")
+        logger.error(f"DDGS fallback error: {e}")
         return []
 
 
@@ -163,18 +133,13 @@ async def search_web(query: str, num_results: int = 10, deep_search: bool = Fals
     
     num_results = min(num_results, 20)
     
-    # Try DDGS library first (more reliable with retries)
-    results = await search_with_ddgs(query, num_results, retries=3)
+    # Try HTML scraping first - most reliable with built-in retries
+    results = await search_duckduckgo_html(query, num_results, retries=3)
     
-    # Fallback to HTML scraping if DDGS fails
+    # Fallback to ddgs library
     if not results:
-        logger.info("DDGS failed, trying HTML scraping...")
-        results = await search_duckduckgo_html(query, num_results)
-    
-    # Last resort: try exact match search
-    if not results:
-        logger.info("Trying exact match search...")
-        results = await search_with_ddgs(f'"{query}"', num_results, retries=2)
+        logger.info("HTML scraping failed, trying ddgs library...")
+        results = await search_with_ddgs(query, num_results)
     
     if not results:
         return f"No results found for: {query}. Please try again."
@@ -218,19 +183,11 @@ async def search_web(query: str, num_results: int = 10, deep_search: bool = Fals
 async def quick_lookup(query: str) -> str:
     """
     Quick lookup for a topic - combines search + first result content.
-    Best for finding info about people, places, or specific topics.
-    
-    Args:
-        query: What to look up (person name, topic, etc.)
-        
-    Returns:
-        Search results with content from the most relevant page
     """
-    # Use DDGS with retries
-    results = await search_with_ddgs(query, 5, retries=3)
+    results = await search_duckduckgo_html(query, 5, retries=3)
     
     if not results:
-        results = await search_duckduckgo_html(query, 5)
+        results = await search_with_ddgs(query, 5)
     
     if not results:
         return f"No results found for: {query}. Please try again."
@@ -252,7 +209,7 @@ async def quick_lookup(query: str) -> str:
     header += "=" * 50
     formatted = header + "".join(formatted_results)
     
-    # Get content from the first result
+    # Get content from first result
     first_url = results[0].get("href", results[0].get("link", ""))
     if first_url:
         content = await fetch_page_content(first_url, 5000)
@@ -263,15 +220,6 @@ async def quick_lookup(query: str) -> str:
 
 
 async def search_site(query: str, site: str) -> str:
-    """
-    Search within a specific website.
-    
-    Args:
-        query: Search query
-        site: Website domain (e.g., 'linkedin.com', 'instagram.com', 'github.com')
-        
-    Returns:
-        Search results from that specific site
-    """
+    """Search within a specific website."""
     site_query = f"site:{site} {query}"
     return await search_web(site_query, 10, False)
