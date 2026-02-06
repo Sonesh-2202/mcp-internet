@@ -344,11 +344,6 @@ async def warmup():
         from .utils.http_client import get_client
         await get_client()
         logger.info("HTTP client warmed up")
-        
-        # Warmup search/DDGS module
-        from .tools.search import warmup_search
-        await warmup_search()
-        logger.info("Search module warmed up")
     except Exception as e:
         logger.warning(f"Warmup failed (non-critical): {e}")
 
