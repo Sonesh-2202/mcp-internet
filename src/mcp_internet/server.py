@@ -348,8 +348,12 @@ async def warmup():
             await client.get("https://html.duckduckgo.com/html/", timeout=10.0)
             logger.info("HTTP client warmed up with DuckDuckGo")
         except Exception:
-            # Even if warmup request fails, the client is now initialized
             logger.info("HTTP client initialized (warmup request skipped)")
+        
+        # Warmup search/DDGS module
+        from .tools.search import warmup_search
+        await warmup_search()
+        logger.info("Search module warmed up")
     except Exception as e:
         logger.warning(f"Warmup failed (non-critical): {e}")
 
