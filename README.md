@@ -1,336 +1,325 @@
-# 🌐 MCP Internet Server
+🌐 MCP Internet Server
+Internet Capability Layer for Local LLMs
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![MCP](https://img.shields.io/badge/MCP-compatible-green.svg)](https://modelcontextprotocol.io/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![LM Studio](https://img.shields.io/badge/LM%20Studio-ready-purple.svg)](https://lmstudio.ai/)
 
-> **Give your local LLMs the power of the internet!** 🚀
 
-An MCP server providing **22 internet tools** for local LLMs in LM Studio. Search the web, read articles, get weather, news, and more - **no API keys required!**
 
----
+[
+]
+[
+]
 
-## 📋 Table of Contents
 
-- [Quick Start](#-quick-start)
-  - [Windows](#windows-using-uv)
-  - [Arch Linux](#arch-linux-using-venv)
-- [Available Tools](#️-available-tools-22)
-- [Configuration](#-configuration)
-  - [Windows Configuration](#windows-configuration)
-  - [Arch Linux Configuration](#arch-linux-configuration)
-- [Dependencies](#-dependencies)
-- [Troubleshooting](#-troubleshooting)
-- [Project Structure](#-project-structure)
-- [License](#-license)
+A production-ready Model Context Protocol (MCP) server that gives local LLMs real-time internet capabilities — fully async, modular, and API-key free.
 
----
+📌 Overview
 
-## 🚀 Quick Start
+Local LLMs are powerful — but static.
 
-### Windows (using uv)
+Without structured access to external data, they are limited to training-time knowledge.
 
-```bash
-git clone https://github.com/Sonesh-2202/mcp-internet.git
+MCP Internet Server extends local models (via LM Studio) with a real-time tool execution layer built on the Model Context Protocol (MCP). It enables LLMs to:
+
+Perform live web searches
+
+Fetch current weather
+
+Retrieve news
+
+Search GitHub
+
+Extract webpage content
+
+Convert currencies
+
+And much more
+
+All running locally.
+No cloud LLM provider.
+No API keys required.
+No telemetry.
+
+This project focuses on clean architecture, async execution, and modular extensibility.
+
+🏗 Architecture
+High-Level Flow
+
+User sends a prompt in LM Studio
+
+The LLM determines a tool is required
+
+A structured MCP tool call is issued via STDIO
+
+FastMCP dispatches the request
+
+Tool executes async HTTP request
+
+Result returned to the model
+
+Model synthesizes final response
+
+System Layers
+1️⃣ Transport Layer
+
+STDIO-based MCP communication
+
+JSON tool call protocol
+
+Strict stdout (protocol) / stderr (logging) separation
+
+2️⃣ Execution Layer
+
+FastMCP server
+
+Decorator-based tool registration
+
+Lazy-loaded imports for faster startup
+
+3️⃣ Networking Layer
+
+Async HTTP using httpx
+
+Shared HTTP utilities
+
+Browser-like headers
+
+Timeout handling & structured error recovery
+
+4️⃣ Parsing & Processing
+
+BeautifulSoup + lxml
+
+RSS feed parsing
+
+Webpage content cleaning
+
+Structured response formatting
+
+5️⃣ Resilience Strategy
+
+Fallback APIs
+
+Graceful failure handling
+
+Controlled output truncation
+
+Input validation
+
+🛠 Available Tools (22)
+🔍 Search & Discovery
+
+search_web
+
+quick_lookup
+
+search_site
+
+📄 Content Extraction
+
+read_webpage
+
+read_pdf
+
+📰 Media & Social
+
+get_news
+
+search_reddit
+
+search_twitter
+
+search_youtube
+
+get_video_info
+
+💻 Developer Tools
+
+search_github
+
+get_repo_info
+
+🌤 Information Utilities
+
+get_weather
+
+get_current_time
+
+translate_text
+
+calculate
+
+🌐 Network & URL Tools
+
+shorten_url
+
+get_my_ip
+
+geolocate_ip
+
+📦 Output & Automation
+
+generate_qr
+
+generate_wifi_qr
+
+send_email
+
+All tools operate using public/free endpoints wherever possible.
+
+⚙️ Installation
+Windows (Recommended: uv)
+git clone https://github.com/yourusername/mcp-internet.git
 cd mcp-internet
 uv sync
-```
 
-### Arch Linux (using venv)
 
-```bash
-# Clone the repository
-git clone https://github.com/Sonesh-2202/mcp-internet.git
+Run manually for testing:
+
+uv run mcp-internet
+
+Linux (venv)
+git clone https://github.com/yourusername/mcp-internet.git
 cd mcp-internet
 
-# Install Python if not already installed
-sudo pacman -S python python-pip
-
-# Create and activate virtual environment
 python -m venv .venv
 source .venv/bin/activate
 
-# Install dependencies
 pip install -e .
 
-# Or install with pip directly
-pip install mcp[cli] httpx beautifulsoup4 lxml ddgs
-```
 
-**For PDF support (optional):**
-```bash
-pip install pdfplumber
-# Or install all optional dependencies
-pip install -e ".[all]"
-```
+Run manually:
 
----
+python -m mcp_internet.server
 
-## ⚙️ Configuration
+🔧 LM Studio Configuration
 
-### Windows Configuration
+Add to your mcp.json:
 
-Add to LM Studio's `mcp.json`:
-```json
+Using uv
 {
   "mcpServers": {
     "mcp-internet": {
       "command": "uv",
       "args": ["run", "mcp-internet"],
-      "cwd": "E:\\Coding projects\\MCP-Internet"
+      "cwd": "PATH_TO_PROJECT"
     }
   }
 }
-```
 
-### Arch Linux Configuration
-
-Add to LM Studio's `mcp.json` (typically at `~/.config/lmstudio/mcp.json`):
-
-**Option 1: Using venv directly**
-```json
+Using Python directly
 {
   "mcpServers": {
     "mcp-internet": {
-      "command": "/path/to/mcp-internet/.venv/bin/python",
+      "command": "python",
       "args": ["-m", "mcp_internet.server"],
-      "cwd": "/path/to/mcp-internet"
+      "cwd": "PATH_TO_PROJECT"
     }
   }
 }
-```
 
-**Option 2: Using a shell wrapper script**
 
-Create a shell script `~/.local/bin/run-mcp-internet.sh`:
-```bash
-#!/bin/bash
-cd /path/to/mcp-internet
-source .venv/bin/activate
-python -m mcp_internet.server
-```
+Restart LM Studio after configuration.
 
-Then in `mcp.json`:
-```json
-{
-  "mcpServers": {
-    "mcp-internet": {
-      "command": "/home/youruser/.local/bin/run-mcp-internet.sh",
-      "args": []
-    }
-  }
-}
-```
+💡 Example Prompts
+Search the web for Python async tutorials
+What's the weather in Tokyo?
+Get the latest technology news
+Search GitHub for machine learning projects
+Translate "Hello world" to Japanese
+Read this webpage: https://example.com
+Convert 100 USD to INR
 
-**Option 3: Using uv on Arch Linux**
-```bash
-# Install uv
-curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Then use the same configuration as Windows
-```
+The model will automatically call the appropriate tool.
 
-```json
-{
-  "mcpServers": {
-    "mcp-internet": {
-      "command": "uv",
-      "args": ["run", "mcp-internet"],
-      "cwd": "/path/to/mcp-internet"
-    }
-  }
-}
-```
-
----
-
-## 🛠️ Available Tools (22)
-
-| Category | Tools |
-|----------|-------|
-| 🔍 **Search** | `search_web`, `quick_lookup`, `search_site` |
-| 📄 **Reading** | `read_webpage`, `read_pdf` |
-| 📰 **News/Social** | `get_news`, `search_reddit`, `search_twitter` |
-| 🎬 **YouTube** | `search_youtube`, `get_video_info` |
-| 💻 **GitHub** | `search_github`, `get_repo_info` |
-| 🌤️ **Info** | `get_weather`, `get_current_time`, `translate_text`, `calculate` |
-| 🔗 **URLs/IP** | `shorten_url`, `get_my_ip`, `geolocate_ip` |
-| 📱 **QR/Email** | `generate_qr`, `generate_wifi_qr`, `send_email` |
-
----
-
-## 📦 Dependencies
-
-### Core Dependencies (Required)
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `mcp[cli]` | >=1.2.0 | MCP server framework |
-| `httpx` | >=0.27.0 | Async HTTP client |
-| `beautifulsoup4` | >=4.12.0 | HTML parsing |
-| `lxml` | >=5.0.0 | Fast XML/HTML parser |
-| `ddgs` | >=9.0.0 | DuckDuckGo search |
-
-### Optional Dependencies
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `pdfplumber` | >=0.10.0 | PDF reading support |
-
-### Manual Installation (Arch Linux)
-
-```bash
-# Activate your venv first
-source .venv/bin/activate
-
-# Install core dependencies
-pip install "mcp[cli]>=1.2.0" "httpx>=0.27.0" "beautifulsoup4>=4.12.0" "lxml>=5.0.0" "ddgs>=9.0.0"
-
-# Optional: PDF support
-pip install "pdfplumber>=0.10.0"
-```
-
----
-
-## 💡 Try These
-
-```
-"Search the web for Python tutorials"
-"What's the weather in Tokyo?"
-"Get the latest tech news"
-"Search YouTube for coding tutorials"
-"Search GitHub for machine learning projects"
-"Translate 'Hello' to Japanese"
-```
-
----
-
-## 🔧 Troubleshooting
-
-### Common Issues on Arch Linux
-
-**1. Python command not found**
-```bash
-# Arch uses python3 by default
-sudo pacman -S python
-# Or create an alias
-alias python=python3
-```
-
-**2. Module not found errors**
-```bash
-# Ensure venv is activated
-source .venv/bin/activate
-
-# Reinstall the package in editable mode
-pip install -e .
-```
-
-**3. Permission denied on script**
-```bash
-chmod +x ~/.local/bin/run-mcp-internet.sh
-```
-
-**4. SSL/Certificate errors**
-```bash
-# Install CA certificates
-sudo pacman -S ca-certificates
-pip install --upgrade certifi
-```
-
-**5. lxml build fails**
-```bash
-# Install required system libraries
-sudo pacman -S libxml2 libxslt
-pip install lxml
-```
-
-### Common Issues on Windows
-
-**1. Unicode/Emoji errors**
-The server automatically handles this, but ensure your terminal supports UTF-8.
-
-**2. Path issues in mcp.json**
-Use double backslashes (`\\`) or forward slashes (`/`) in paths.
-
----
-
-## 📁 Project Structure
-
-```
+📁 Project Structure
 mcp-internet/
-├── pyproject.toml         # Project configuration & dependencies
-├── README.md              # This file
+├── pyproject.toml
+├── README.md
 ├── src/mcp_internet/
-│   ├── __init__.py
-│   ├── server.py          # Main MCP server
+│   ├── server.py          # MCP server entry point
 │   ├── tools/             # Tool implementations
-│   │   ├── search.py      # Web search (DuckDuckGo)
-│   │   ├── webpage.py     # Content extraction
-│   │   ├── news.py        # News headlines
-│   │   ├── weather.py     # Weather data
-│   │   ├── youtube.py     # YouTube search
-│   │   ├── reddit.py      # Reddit search
-│   │   ├── twitter.py     # Twitter search
-│   │   ├── github.py      # GitHub search
-│   │   ├── translator.py  # Translation
-│   │   ├── math_tools.py  # Calculator
-│   │   ├── urls.py        # URL tools
-│   │   ├── ip_tools.py    # IP lookup
-│   │   ├── qr_code.py     # QR codes
-│   │   ├── pdf_reader.py  # PDF reading
-│   │   ├── email_sender.py# Email
-│   │   └── time.py        # Time zones
 │   └── utils/
-│       └── http_client.py # HTTP utilities
-└── .venv/                 # Virtual environment (created by you)
-```
+│       └── http_client.py # Shared async HTTP utilities
 
----
 
-## 🔄 Updating
+Clear separation between:
 
-### Windows
-```bash
-cd mcp-internet
-git pull
-uv sync
-```
+Protocol layer
 
-### Arch Linux
-```bash
-cd mcp-internet
-git pull
-source .venv/bin/activate
-pip install -e .
-```
+Tool implementations
 
----
+Shared utilities
 
-## 🧪 Running Manually (Testing)
+🧠 Design Principles
+Async-First
 
-### Windows
-```bash
-uv run mcp-internet
-```
+All tools use non-blocking I/O for scalability and responsiveness.
 
-### Arch Linux
-```bash
-source .venv/bin/activate
-python -m mcp_internet.server
-```
+Modular Architecture
 
----
+Each tool is self-contained and registered via decorators.
 
-## 📄 License
+Local-First
 
-MIT License - See [LICENSE](LICENSE) for details.
+No model data is transmitted externally. Only tool-specific API calls are made.
 
----
+Zero API Keys
 
-## 🤝 Contributing
+Reduces friction and simplifies setup.
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Graceful Failure
 
----
+APIs fail → fallback logic triggers → structured error response returned.
 
-**Made with ❤️ for the local LLM community**
+🚀 Roadmap
+
+ Tool result caching layer
+
+ Rate limiting controls
+
+ Docker container support
+
+ Streaming tool responses
+
+ Plugin-based tool discovery
+
+ Observability & logging dashboard
+
+🤝 Contributing
+
+Contributions are welcome.
+
+Focus areas:
+
+New tools
+
+Performance optimizations
+
+Better fallback strategies
+
+Streaming support
+
+Cross-platform improvements
+
+🔒 Privacy
+
+This server does not:
+
+Send prompts to external LLM providers
+
+Log user queries externally
+
+Store persistent user data
+
+Only tool-specific API endpoints are contacted when required.
+
+📄 License
+
+MIT License.
+
+✨ Final Note
+
+This project explores what local AI becomes when given structured, controlled access to the internet.
+
+It is not just a feature extension — it is an infrastructure layer for tool-augmented local intelligence.
