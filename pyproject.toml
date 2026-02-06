@@ -1,7 +1,7 @@
 [project]
 name = "mcp-internet"
 version = "2.0.0"
-description = "🌐 MCP Server that gives local LLMs internet access - 33 tools for web search, news, weather, stocks, GitHub, YouTube, and more!"
+description = "🌐 MCP Server that gives local LLMs internet access - 22 tools for web search, news, weather, GitHub, YouTube, and more!"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [
