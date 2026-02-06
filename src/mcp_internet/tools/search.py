@@ -1,10 +1,11 @@
 """
 Web Search Tool - Search the internet using DuckDuckGo.
 
-Uses both HTML scraping (for best results) and ddgs library (as fallback).
-Includes deep search and site-specific search features.
+Uses ddgs library as primary with HTML scraping as fallback.
+Includes retry logic to handle cold-start issues.
 """
 
+import asyncio
 import logging
 import re
 from urllib.parse import quote_plus, unquote
@@ -14,6 +15,28 @@ from bs4 import BeautifulSoup
 from ..utils.http_client import fetch_url
 
 logger = logging.getLogger(__name__)
+
+# Global ddgs instance to avoid re-initialization
+_ddgs_instance = None
+
+
+def get_ddgs():
+    """Get or create a reusable DDGS instance."""
+    global _ddgs_instance
+    if _ddgs_instance is None:
+        from ddgs import DDGS
+        _ddgs_instance = DDGS()
+    return _ddgs_instance
+
+
+async def warmup_search():
+    """Pre-initialize the search components."""
+    try:
+        # Initialize ddgs instance
+        get_ddgs()
+        logger.info("Search module warmed up")
+    except Exception as e:
+        logger.warning(f"Search warmup failed: {e}")
 
 
 async def fetch_page_content(url: str, max_length: int = 3000) -> str:
@@ -36,11 +59,48 @@ def extract_url_from_ddg_redirect(ddg_url: str) -> str:
     return ddg_url
 
 
+async def search_with_ddgs(query: str, num_results: int = 10, retries: int = 3) -> list[dict]:
+    """
+    Search using ddgs library with retry logic.
+    
+    The ddgs library can be slow on first call, so we retry if needed.
+    """
+    last_error = None
+    
+    for attempt in range(retries):
+        try:
+            ddgs = get_ddgs()
+            # Run in executor to avoid blocking
+            loop = asyncio.get_event_loop()
+            results = await loop.run_in_executor(
+                None, 
+                lambda: list(ddgs.text(query, max_results=num_results))
+            )
+            if results:
+                return results
+            # If empty results, try again
+            logger.warning(f"DDGS returned empty results (attempt {attempt + 1}/{retries})")
+        except Exception as e:
+            last_error = e
+            logger.warning(f"DDGS search error (attempt {attempt + 1}/{retries}): {e}")
+            # Reset instance on error
+            global _ddgs_instance
+            _ddgs_instance = None
+            
+        # Brief delay before retry
+        if attempt < retries - 1:
+            await asyncio.sleep(0.5)
+    
+    if last_error:
+        logger.error(f"All DDGS attempts failed: {last_error}")
+    return []
+
+
 async def search_duckduckgo_html(query: str, num_results: int = 10) -> list[dict]:
     """
-    Search using DuckDuckGo HTML interface - THE ORIGINAL METHOD THAT WORKS BEST.
+    Search using DuckDuckGo HTML interface as fallback.
     
-    This method scrapes the HTML results page for more comprehensive results
+    This method scrapes the HTML results page for comprehensive results
     including detailed snippets and proper URL extraction.
     """
     encoded_query = quote_plus(query)
@@ -66,16 +126,16 @@ async def search_duckduckgo_html(query: str, num_results: int = 10) -> list[dict
             
             title = title_elem.get_text(strip=True)
             raw_url = title_elem.get("href", "")
-            url = extract_url_from_ddg_redirect(raw_url)
+            result_url = extract_url_from_ddg_redirect(raw_url)
             
             # Extract snippet
             snippet_elem = result_div.find("a", class_="result__snippet")
             snippet = snippet_elem.get_text(strip=True) if snippet_elem else "No description available"
             
-            if title and url:
+            if title and result_url:
                 results.append({
                     "title": title,
-                    "href": url,
+                    "href": result_url,
                     "body": snippet
                 })
         
@@ -83,18 +143,6 @@ async def search_duckduckgo_html(query: str, num_results: int = 10) -> list[dict
         
     except Exception as e:
         logger.error(f"Error parsing DuckDuckGo HTML: {e}")
-        return []
-
-
-async def search_with_ddgs(query: str, num_results: int = 10) -> list[dict]:
-    """Fallback search using ddgs library."""
-    try:
-        from ddgs import DDGS
-        ddgs = DDGS()
-        results = list(ddgs.text(query, max_results=num_results))
-        return results
-    except Exception as e:
-        logger.error(f"Error with ddgs search: {e}")
         return []
 
 
@@ -115,20 +163,21 @@ async def search_web(query: str, num_results: int = 10, deep_search: bool = Fals
     
     num_results = min(num_results, 20)
     
-    # Try HTML scraping first (best results) - THIS IS THE ORIGINAL METHOD
-    results = await search_duckduckgo_html(query, num_results)
+    # Try DDGS library first (more reliable with retries)
+    results = await search_with_ddgs(query, num_results, retries=3)
     
-    # Fallback to ddgs library if HTML scraping fails
+    # Fallback to HTML scraping if DDGS fails
     if not results:
-        logger.info("HTML scraping returned no results, trying ddgs library...")
-        results = await search_with_ddgs(query, num_results)
+        logger.info("DDGS failed, trying HTML scraping...")
+        results = await search_duckduckgo_html(query, num_results)
+    
+    # Last resort: try exact match search
+    if not results:
+        logger.info("Trying exact match search...")
+        results = await search_with_ddgs(f'"{query}"', num_results, retries=2)
     
     if not results:
-        # Try exact match search
-        results = await search_duckduckgo_html(f'"{query}"', num_results)
-    
-    if not results:
-        return f"No results found for: {query}"
+        return f"No results found for: {query}. Please try again."
     
     # Format results
     formatted_results = []
@@ -177,14 +226,14 @@ async def quick_lookup(query: str) -> str:
     Returns:
         Search results with content from the most relevant page
     """
-    # Use HTML scraping for best results
-    results = await search_duckduckgo_html(query, 5)
+    # Use DDGS with retries
+    results = await search_with_ddgs(query, 5, retries=3)
     
     if not results:
-        results = await search_with_ddgs(query, 5)
+        results = await search_duckduckgo_html(query, 5)
     
     if not results:
-        return f"No results found for: {query}"
+        return f"No results found for: {query}. Please try again."
     
     # Format basic results
     formatted_results = []

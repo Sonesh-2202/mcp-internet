@@ -338,11 +338,17 @@ async def send_email(to_email: str, subject: str, body: str) -> str:
 # Server Entry Point
 # =============================================================================
 async def warmup():
-    """Pre-initialize the HTTP client to avoid cold-start delays."""
+    """Pre-initialize components to avoid cold-start delays."""
     try:
+        # Warmup HTTP client
         from .utils.http_client import get_client
-        client = await get_client()
-        logger.info("HTTP client warmed up successfully")
+        await get_client()
+        logger.info("HTTP client warmed up")
+        
+        # Warmup search/DDGS module
+        from .tools.search import warmup_search
+        await warmup_search()
+        logger.info("Search module warmed up")
     except Exception as e:
         logger.warning(f"Warmup failed (non-critical): {e}")
 
@@ -353,12 +359,13 @@ def main():
     
     logger.info("Starting MCP Internet Server...")
     
-    # Warmup the HTTP client in background
+    # Warmup components
     try:
-        asyncio.get_event_loop().run_until_complete(warmup())
-    except RuntimeError:
-        # Event loop may already be running or not exist yet
-        pass
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(warmup())
+    except Exception as e:
+        logger.warning(f"Warmup error: {e}")
     
     mcp.run(transport="stdio")
 
