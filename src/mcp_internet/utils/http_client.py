@@ -21,6 +21,13 @@ DEFAULT_HEADERS = {
     "Accept-Language": "en-US,en;q=0.5",
 }
 
+# GoogleBot headers to bypass certain authwalls (e.g., LinkedIn)
+GOOGLEBOT_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.5",
+}
+
 # Timeout configuration - increased connect timeout for cold starts
 DEFAULT_TIMEOUT = httpx.Timeout(30.0, connect=15.0)
 
@@ -78,7 +85,8 @@ async def fetch_url(
         Response text content, or None if request failed
     """
     client = await get_client()
-    request_headers = {**DEFAULT_HEADERS, **(headers or {})}
+    base_headers = GOOGLEBOT_HEADERS if "linkedin.com" in url.lower() else DEFAULT_HEADERS
+    request_headers = {**base_headers, **(headers or {})}
     
     last_error = None
     for attempt in range(retries + 1):
@@ -131,8 +139,9 @@ async def fetch_json(
         Parsed JSON data, or None if request failed
     """
     client = await get_client()
+    base_headers = GOOGLEBOT_HEADERS if "linkedin.com" in url.lower() else DEFAULT_HEADERS
     request_headers = {
-        **DEFAULT_HEADERS,
+        **base_headers,
         "Accept": "application/json",
         **(headers or {}),
     }

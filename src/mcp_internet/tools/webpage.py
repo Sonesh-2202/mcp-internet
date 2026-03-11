@@ -38,9 +38,23 @@ def clean_text(text: str) -> str:
     return text.strip()
 
 
-def extract_main_content(soup: BeautifulSoup) -> str:
+def extract_main_content(soup: BeautifulSoup, url: str = "") -> str:
     """Extract the main readable content from parsed HTML."""
     
+    is_linkedin = "linkedin.com" in url.lower()
+
+    if is_linkedin:
+        # LinkedIn public profiles have a <main> tag containing the entire profile
+        main_content = soup.find("main")
+        if main_content:
+            for tag in ["script", "style", "nav", "svg", "button", "iframe", "noscript"]:
+                for element in main_content.find_all(tag):
+                    try:
+                        element.decompose()
+                    except:
+                        pass
+            return main_content.get_text(separator='\n', strip=True)
+
     # Remove unwanted elements
     for tag in REMOVE_TAGS:
         for element in soup.find_all(tag):
@@ -108,7 +122,7 @@ async def read_webpage(url: str, max_length: int = 5000) -> str:
         description = meta_desc.get("content", "") if meta_desc else ""
         
         # Extract main content
-        content = extract_main_content(soup)
+        content = extract_main_content(soup, url)
         content = clean_text(content)
         
         # Truncate if needed
