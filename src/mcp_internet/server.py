@@ -1,8 +1,14 @@
 """
-MCP Internet Server - Main Entry Point
+MCP Internet Server v3.0 - Main Entry Point
 
 This server provides internet access tools for local LLMs in LM Studio.
 Run with: uv run python -m mcp_internet.server
+
+Features:
+- search_web: Web search with optional deep content extraction
+- Result caching for performance
+- Structured output (markdown tables, bullet points)
+- User-agent rotation and rate limiting
 """
 
 import logging
@@ -35,13 +41,32 @@ async def search_web(query: str, num_results: int = 10, deep_search: bool = Fals
     """
     Search the internet using DuckDuckGo.
     
+    Returns search result links with snippets. Set deep_search=True to also
+    fetch and extract content from the top results for detailed information.
+    
     Args:
-        query: The search query
+        query: The search query (person, topic, question, anything)
         num_results: Number of results (default: 10, max: 20)
-        deep_search: Fetch content from top results for details
+        deep_search: Fetch and extract content from top results for details
     """
     from .tools.search import search_web as _search
     return await _search(query, min(num_results, 20), deep_search)
+
+
+@mcp.tool()
+async def deep_search(query: str, num_sources: int = 5) -> str:
+    """
+    Deep research — searches and scrapes multiple pages for comprehensive results.
+    
+    Use this when you need thorough, detailed information from multiple sources.
+    Takes longer but returns extracted content from each page, not just links.
+    
+    Args:
+        query: Research topic or question
+        num_sources: Number of pages to scrape and analyze (1-8, default: 5)
+    """
+    from .tools.search import deep_search as _deep
+    return await _deep(query, min(num_sources, 8))
 
 
 @mcp.tool()
@@ -76,6 +101,12 @@ async def search_site(query: str, site: str) -> str:
 async def read_webpage(url: str, max_length: int = 5000) -> str:
     """
     Extract text content from a webpage.
+    
+    Automatically detects and extracts:
+    - Main article/page content
+    - Structured data (JSON-LD, Schema.org)  
+    - HTML tables (converted to markdown)
+    - Meta descriptions and OpenGraph data
     
     Args:
         url: The URL to read
@@ -335,6 +366,25 @@ async def send_email(to_email: str, subject: str, body: str) -> str:
 
 
 # =============================================================================
+# CACHE MANAGEMENT
+# =============================================================================
+@mcp.tool()
+async def clear_cache(category: str = "") -> str:
+    """
+    Clear the search/page cache.
+    
+    Args:
+        category: Optional - clear only a specific category ('search', 'page', 'profile').
+                  Leave empty to clear all cached data.
+    """
+    from .utils.cache import cache_clear
+    count = await cache_clear(category if category else None)
+    if category:
+        return f"✅ Cleared {count} cached entries in category '{category}'."
+    return f"✅ Cleared {count} cached entries (all categories)."
+
+
+# =============================================================================
 # Server Entry Point
 # =============================================================================
 async def warmup():
@@ -350,13 +400,21 @@ async def warmup():
             logger.info("HTTP client initialized")
     except Exception as e:
         logger.warning(f"Warmup failed: {e}")
+    
+    # Initialize cache database
+    try:
+        from .utils.cache import _ensure_db
+        await _ensure_db()
+        logger.info("Cache database ready")
+    except Exception as e:
+        logger.warning(f"Cache init: {e}")
 
 
 def main():
     """Run the MCP server using STDIO transport."""
     import asyncio
     
-    logger.info("Starting MCP Internet Server...")
+    logger.info("Starting MCP Internet Server v3.0...")
     
     # Warmup components
     try:

@@ -1,13 +1,13 @@
 [project]
 name = "mcp-internet"
-version = "2.0.0"
-description = "🌐 MCP Server that gives local LLMs internet access - 22 tools for web search, news, weather, GitHub, YouTube, and more!"
+version = "3.0.0"
+description = "🌐 MCP Server that gives local LLMs internet access — 24 tools for intelligent web search, auto-extraction, news, weather, GitHub, YouTube, and more!"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [
     { name = "Sonesh", email = "sonesh@example.com" }
 ]
-keywords = ["mcp", "llm", "lm-studio", "ai", "internet", "tools", "search", "youtube", "github", "reddit"]
+keywords = ["mcp", "llm", "lm-studio", "ai", "internet", "tools", "search", "youtube", "github", "reddit", "smart-search"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -25,6 +25,7 @@ dependencies = [
     "beautifulsoup4>=4.12.0",
     "lxml>=5.0.0",
     "ddgs>=9.0.0",
+    "aiosqlite>=0.20.0",
 ]
 
 [project.optional-dependencies]
