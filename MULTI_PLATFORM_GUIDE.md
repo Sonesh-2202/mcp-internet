@@ -155,16 +155,35 @@ MCP servers must be configured within an MCP-compatible client. Here are the ins
 ### LM Studio
 
 Navigate to the **Program** tab in LM Studio, and locate the `mcp.json` file configuration settings.
-Add the following entry:
+Ensure your file contains the top-level `{"mcpServers": { ... }}` wrapper.
 
-**If you used setup Method 1 (`uv`):**
+**If you used setup Method 1 (`uv` - Recommended):**
 ```json
 {
   "mcpServers": {
     "mcp-internet": {
       "command": "uv",
-      "args": ["run", "mcp-internet"],
+      "args": [
+        "run",
+        "--directory",
+        "/absolute/path/to/your/mcp-internet",
+        "mcp-internet"
+      ],
       "cwd": "/absolute/path/to/your/mcp-internet"
+    }
+  }
+}
+```
+
+**If you used setup Method 2 (Virtual Env - Windows):**
+*(Tip: Use forward slashes `/` in paths on Windows to avoid JSON escape errors like `\C` or `\M`)*
+```json
+{
+  "mcpServers": {
+    "mcp-internet": {
+      "command": "D:/Coding projects/MCP-Internet/.venv/Scripts/python.exe",
+      "args": ["-m", "mcp_internet.server"],
+      "cwd": "D:/Coding projects/MCP-Internet"
     }
   }
 }
@@ -182,20 +201,7 @@ Add the following entry:
   }
 }
 ```
-
-**If you used setup Method 2 (Virtual Env - Windows):**
-```json
-{
-  "mcpServers": {
-    "mcp-internet": {
-      "command": "C:\\absolute\\path\\to\\mcp-internet\\.venv\\Scripts\\python.exe",
-      "args": ["-m", "mcp_internet.server"],
-      "cwd": "C:\\absolute\\path\\to\\mcp-internet"
-    }
-  }
-}
-```
-*Tip: On Windows paths, remember to escape the backslashes (`\\`), or simply use forward slashes (`/`).*
+*Note: The `--directory` flag with `uv` guarantees that `uv` loads the project dependencies even if LM Studio executes the command from a different working directory.*
 
 ### Claude Desktop
 

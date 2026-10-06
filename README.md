@@ -82,21 +82,25 @@ uv sync
 
 ### LM Studio Configuration
 
-Add to your LM Studio `mcp.json`:
+Add to your LM Studio `mcp.json` (ensure you keep the top-level `{"mcpServers": { ... }}` wrapper):
 
+#### Using `uv` (Recommended)
 ```json
 {
   "mcpServers": {
     "mcp-internet": {
       "command": "uv",
-      "args": ["run", "mcp-internet"],
+      "args": [
+        "run",
+        "--directory",
+        "/absolute/path/to/mcp-internet",
+        "mcp-internet"
+      ],
       "cwd": "/absolute/path/to/mcp-internet"
     }
   }
 }
 ```
-
-*(Replace `/absolute/path/to/mcp-internet` with your actual project path)*
 
 ### 📖 Detailed OS Guides
 For complete, step-by-step instructions for **Windows, macOS, and Linux**, see the 👉 **[Multi-Platform Usage Guide](MULTI_PLATFORM_GUIDE.md)**.
